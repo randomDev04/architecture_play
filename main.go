@@ -9,6 +9,8 @@ import (
 
 func main() {
 
+	// add database here
+
 	r := chi.NewRouter()
 
 	if err := http.ListenAndServe(":8080", r); err != nil {

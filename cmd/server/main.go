@@ -1,6 +1,9 @@
 package main
 
 import (
+	"go_todo_backend/internal/handler"
+	"go_todo_backend/internal/repository"
+	"go_todo_backend/pkg/db"
 	"log"
 	"net/http"
 
@@ -14,11 +17,24 @@ func main() {
 
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		log.Println("⚠️  No .env file found. Using system environment.")
 	}
+
+	db.Init()
+	defer db.DB.Close()
+
+	todoRepo := repository.NewPostgresTodoRepo(db.DB)
+
+	todoHandler := handler.NewTodoHandler(todoRepo)
 
 	r := chi.NewRouter()
 
+	r.Route("/api/todos", func(r chi.Router) {
+		r.Get("/", todoHandler.GetTodos)
+		r.Post("/", todoHandler.CreateTodo)
+	})
+
+	log.Println("Server started at :8080")
 	if err := http.ListenAndServe(":8080", r); err != nil {
 		log.Fatal("Failed to run server", err)
 	}

@@ -13,9 +13,8 @@ import (
 
 func main() {
 
-	// add database here
-
-	err := godotenv.Load()
+	// leading env file
+	err := godotenv.Load("../../.env") // pass the file to connect to the env
 	if err != nil {
 		log.Println("⚠️  No .env file found. Using system environment.")
 	}

@@ -1,4 +1,4 @@
-package main
+package model
 
 // using capital letter to make it exportable
 type User struct {

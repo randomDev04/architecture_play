@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/rendomDev/task-manager-api/config"
+	"github.com/rendomDev/task-manager-api/handlers"
 )
 
 func main() {
@@ -26,6 +27,10 @@ func main() {
 		})
 	})
 
+	r.NoRoute(func(c *gin.Context) {
+		c.JSON(404, gin.H{"error": "route not found"})
+	})
+
 	//Health Check
 	r.GET("/api/v1/health", func(ctx *gin.Context) {
 		ctx.JSON(200, gin.H{
@@ -34,12 +39,8 @@ func main() {
 		})
 	})
 
-	// Test 404 handling
-	r.NoRoute(func(ctx *gin.Context) {
-		ctx.JSON(404, gin.H{
-			"error": "route not found",
-		})
-	})
+	// Auth routes
+	r.POST("/api/v1/auth/register", handlers.Register)
 
 	// Start server
 	log.Fatal(r.Run(":8080"))

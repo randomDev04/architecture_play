@@ -111,6 +111,74 @@ func Register(c *gin.Context) {
 	})
 }
 
+// Login handles POST /api/v1/auth/login
+func Login(c *gin.Context) {
+	var req models.LoginRequest
+
+	// Step 1: Validate request
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	// Step 2: Get user from database by email
+	var user models.User
+	query := `
+        SELECT id, name, email, password_hash, token_version, created_at, updated_at
+        FROM users
+        WHERE email = $1
+    `
+	err := config.DB.QueryRow(query, req.Email).Scan(
+		&user.ID,
+		&user.Name,
+		&user.Email,
+		&user.PasswordHash,
+		&user.TokenVersion,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	)
+
+	// User not found
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "invalid email or password",
+		})
+		return
+	}
+
+	// Step 3: Compare password hash
+	// bcrypt.CompareHashAndPassword automatically handles the salt
+	err = bcrypt.CompareHashAndPassword(
+		[]byte(user.PasswordHash),
+		[]byte(req.Password),
+	)
+
+	// Password doesn't match
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "invalid email or password",
+		})
+		return
+	}
+
+	// Step 4: Generate new JWT token with current token_version
+	token, err := generateJWT(user.ID, user.TokenVersion)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "failed to generate token",
+		})
+		return
+	}
+
+	// Step 5: Return success response
+	c.JSON(http.StatusOK, models.AuthResponse{
+		Token: token,
+		User:  user,
+	})
+}
+
 // generateJWT creates a JWT token with user_id and token_version
 func generateJWT(userID string, tokenVersion int) (string, error) {
 	// JWT claims = data stored inside the token

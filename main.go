@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/rendomDev/task-manager-api/config"
 	"github.com/rendomDev/task-manager-api/handlers"
+	"github.com/rendomDev/task-manager-api/middleware"
 )
 
 func main() {
@@ -41,6 +42,22 @@ func main() {
 
 	// Auth routes
 	r.POST("/api/v1/auth/register", handlers.Register)
+	r.POST("/api/v1/auth/login", handlers.Login)
+
+	protected := r.Group("./api/v1")
+	protected.Use(middleware.AuthMiddleware()) // Apply middleware to all routes in this group
+	{
+		// Test endpoint to verify middlerware works
+		protected.GET("/me", func(ctx *gin.Context) {
+			// Get user_id that middleware stored in context
+			userID, _ := ctx.Get("user_id")
+
+			ctx.JSON(200, gin.H{
+				"message": "you are authenticated",
+				"user_id": userID,
+			})
+		})
+	}
 
 	// Start server
 	log.Fatal(r.Run(":8080"))

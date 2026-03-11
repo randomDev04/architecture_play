@@ -59,6 +59,13 @@ func main() {
 		})
 	}
 
+	// Task endpoints
+	protected.GET("/tasks", handlers.GetTasks)
+	protected.POST("/tasks", handlers.CreateTask)
+	protected.GET("/tasks/:id", handlers.GetTask)
+	protected.PATCH("/tasks/:id", handlers.UpdateTask)
+	protected.DELETE("/tasks/:id", handlers.DeleteTask)
+
 	// Start server
 	log.Fatal(r.Run(":8080"))
 }
